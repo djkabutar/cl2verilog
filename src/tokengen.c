@@ -1,7 +1,8 @@
 #include <stdio.h>
-#include <tokengen.h>
 #include <string.h>
 #include <stdlib.h>
+
+#include <cl2verilog.h>
 
 int token_generate(struct tokend *token, char *kernel_string, int len) {
 	int i, token_count = 0;
