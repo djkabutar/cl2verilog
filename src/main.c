@@ -6,10 +6,11 @@
 
 int print_tokens(struct tokend** token_array, int tokens_count)
 {
+	printf("{");
 	for (int i = 0; i < tokens_count; i++) {
-		printf("Token: %s\n", token_array[i]->token);
-		printf("Token Len: %d\n", token_array[i]->token_len);
+		printf("\"%s\", ", token_array[i]->token);
 	}
+	printf("}\n");
 	return 0;
 }
 
