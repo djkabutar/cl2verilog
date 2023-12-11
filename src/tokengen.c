@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 #include "cl2verilog.h"
 
@@ -30,31 +31,64 @@ void remove_comments(char *kernel_string, int len) {
 	}
 }
 
+int token_push(struct tokend **token_array, char *token, int token_len, int token_count) {
+	// store it in the token array
+	*token_array = realloc(*token_array, sizeof(struct tokend) * (token_count + 1));
+	token_array[token_count] = malloc(sizeof(struct tokend));
+	token_array[token_count]->token = (char *) malloc(token_len + 1);
+	memset(token_array[token_count]->token, 0, token_len + 1);
+	memcpy(token_array[token_count]->token, token, token_len);
+	token_array[token_count]->token_len = token_len;
+	token_count++;
+
+	return token_count;
+}
+
+int check_token(char *kernel_string, char special_char, int i, int len, int token_count, struct tokend **token_array) {
+	if (kernel_string[i] == special_char) {
+		token_count = token_push(token_array, kernel_string + i, 1, token_count);
+	}
+
+	return token_count;
+}
+
 int token_generate(struct tokend **token_array, char *kernel_string, int len) {
-	int i, token_count = 0;
+	int i, j = 0, token_count = 0;
 
 	// remove comments from the kernel string
 	remove_comments(kernel_string, len);
 
 	// from the given example of matmul in ../examples/matmul.cl
-	// generate tokens for __kernel, __global, int, float, void, __local
 	for (i = 0; i < len; i++) {
-		// use naive search method to find predefined tokens
-		// TODO: use more efficient search method
-		// find out tokens from the tokens array in the header file
-
-		for (int j = 0; j < TOKEN_LEN; j++) {
-			if (strncmp(kernel_string + i, tokens[j], strlen(tokens[j])) == 0) {
-				// found a token
-				// store it in the token array
-				*token_array = realloc(*token_array, sizeof(struct tokend) * (token_count + 1));
-				token_array[token_count] = malloc(sizeof(struct tokend));
-				token_array[token_count]->token = (char *) malloc(strlen(tokens[j]));
-				memcpy(token_array[token_count]->token, tokens[j], strlen(tokens[j]));
-				token_array[token_count]->token_len = strlen(tokens[j]);
-				token_count++;
-			}
+		j = i;
+		// check for alphanumeric characters and underscore
+		while (isalpha(kernel_string[j]) || isdigit(kernel_string[j]) || kernel_string[j] == '_') {
+			j++;
 		}
+
+		if (j != i) {
+			token_count = token_push(token_array, kernel_string + i, j - i, token_count);
+			i = j - 1;
+			continue;
+		}
+
+		// check for brackets, semicolon, comma, equal sign
+		token_count = check_token(kernel_string, '(', i, len, token_count, token_array);
+		token_count = check_token(kernel_string, ')', i, len, token_count, token_array);
+		token_count = check_token(kernel_string, '[', i, len, token_count, token_array);
+		token_count = check_token(kernel_string, ']', i, len, token_count, token_array);
+		token_count = check_token(kernel_string, '{', i, len, token_count, token_array);
+		token_count = check_token(kernel_string, '}', i, len, token_count, token_array);
+		token_count = check_token(kernel_string, ';', i, len, token_count, token_array);
+		token_count = check_token(kernel_string, ',', i, len, token_count, token_array);
+		token_count = check_token(kernel_string, '=', i, len, token_count, token_array);
+		token_count = check_token(kernel_string, '*', i, len, token_count, token_array);
+		token_count = check_token(kernel_string, '/', i, len, token_count, token_array);
+		token_count = check_token(kernel_string, '-', i, len, token_count, token_array);
+		token_count = check_token(kernel_string, '&', i, len, token_count, token_array);
+		token_count = check_token(kernel_string, '<', i, len, token_count, token_array);
+		token_count = check_token(kernel_string, '>', i, len, token_count, token_array);
+
 	}
 
 	return token_count;
