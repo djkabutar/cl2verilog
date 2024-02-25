@@ -4,7 +4,7 @@
 #define TOKEN_LEN 6
 
 /* all possible keywords */
-static char **keywords = {"__kernel", "__global", "int", "float", "void", "__local"};
+static char *keywords[] = {"__kernel", "__global", "int", "float", "void", "__local"};
 
 struct tokend {
 	char *token;
@@ -36,7 +36,7 @@ int token_generate(struct tokend **token_array, char *kernel_string, int len);
  * @param len: the length of the kernel string
  * @return: 0 if success, -1 if error
  */
-int macro_substitution(char *kernel_string, int len);
+void macro_substitution(char *kernel_string, int len);
 
 /*
  * Hashing Function
